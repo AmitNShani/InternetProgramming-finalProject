@@ -101,11 +101,17 @@ public class MatrixIHandler implements IHandler {
 
 
     }
+
+    /**
+     * method for returning all the connected components of the graph concurrently
+     * this method use a list of callable and future result.
+     * it uses local thread so each thread will have his own stack, set and his own origin
+     * @result  is a list of connected components order by the number of vertices in each Connected component */
     private List<LinkedHashSet<Index>> getConnectedComponents() throws InterruptedException{
             List<Index> allIndices = this.matrix.getAllAccessibleNodes();
             if (allIndices.size() == 0) return new ArrayList<>();
 
-            LinkedHashSet<Index> foundIndices = new LinkedHashSet<Index>();
+            LinkedHashSet<Index> foundIndices = new LinkedHashSet<>();
 
             List<Future<LinkedHashSet<Index>>> futureConnectedComponents = new ArrayList<>();
 
