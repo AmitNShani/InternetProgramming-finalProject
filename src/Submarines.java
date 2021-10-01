@@ -6,17 +6,18 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Submarines {
-    List<Set<Index>> connectedComponent;
-    ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 10, 10,
+    private List<Set<Index>> connectedComponent;
+    private ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 10, 10,
             TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-    ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    List<Future<Boolean>> futures = new ArrayList<>();
+    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private List<Future<Boolean>> futures = new ArrayList<>();
+    private int validSubmarines = 0;
 
     public Submarines() {
 
     }
-    public boolean checkValidateSubmarines(List<LinkedHashSet<Index>> connectedComponents){
-        if (connectedComponents.isEmpty()) return  false;
+    public int checkValidateSubmarines(List<LinkedHashSet<Index>> connectedComponents){
+        if (connectedComponents.isEmpty()) return  0;
         for (LinkedHashSet<Index> connectedComponent : connectedComponents){
             //Callable<Boolean> taskThread =
             futures.add(threadPool.submit(() -> {
@@ -41,11 +42,11 @@ public class Submarines {
         }
         for (Future<Boolean> future : futures){
             try {
-                if (!future.get()) return false;
+                if (future.get()) validSubmarines++;
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        return true;
+        return validSubmarines;
     }
 }

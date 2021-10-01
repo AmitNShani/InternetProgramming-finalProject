@@ -84,7 +84,7 @@ public class MatrixIHandler implements IHandler {
                 }
                 case "submarinesBoard":{
                         Submarines submarines = new Submarines();
-                        Boolean isValidSubmarine = submarines.checkValidateSubmarines(this.connectedComponents);
+                        int isValidSubmarine = submarines.checkValidateSubmarines(this.connectedComponents);
                         objectOutputStream.writeObject(isValidSubmarine);
                     break;
                 }

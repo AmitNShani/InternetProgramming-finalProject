@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class Client {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -20,7 +19,7 @@ public class Client {
                 {1, 1, 0, 0, 0, 1, 0, 0, 1},
                 {1, 1, 0, 1, 0, 1, 0, 0, 1},
                 {1, 1, 0, 1, 0, 1, 0, 0, 1},
-                {0, 0, 0, 1, 0, 1, 0, 0, 1},
+                {0, 0, 1, 1, 0, 1, 0, 0, 1},
 
         };
 
@@ -42,17 +41,12 @@ public class Client {
 
         // task 3 send "submarinesBoard" command and get if the board is valid.
         toServer.writeObject("submarinesBoard");
-        try {
-            TimeUnit.SECONDS.sleep(3);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        boolean isValidRes = (boolean) fromServer.readObject();
-        if (isValidRes){
-            System.out.println("yayy the Board is valid for submarines game");
+        int numberOfSubmarines = (int) fromServer.readObject();
+        if (numberOfSubmarines == 0 ){
+            System.out.println("Boo the board is empty and there is not even a single submarine");
         }
         else{
-            System.out.println("Booo ain't valid you should rearrange your board game :( ");
+            System.out.println("there are " + numberOfSubmarines + " valid submarines");
         }
 
 
