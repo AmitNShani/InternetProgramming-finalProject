@@ -32,6 +32,11 @@ public class TraversableMatrix implements Traversable<Index> {
         return new Node<>(this.startIndex);
 
     }
+    @Override
+    public int getValue(Index index) {
+        return this.matrix.getValue(index);
+    }
+
 
     @Override
     public Collection<Node<Index>> getReachableNodes(Node<Index> someNode) {
@@ -56,5 +61,8 @@ public class TraversableMatrix implements Traversable<Index> {
     @Override
     public String toString() {
         return matrix.toString();
+    }
+    public boolean isValidIndex(Index index){
+        return matrix.isValidIndex(index);
     }
 }

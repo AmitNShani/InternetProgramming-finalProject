@@ -133,6 +133,14 @@ public class Matrix {
     public final int[][] getPrimitiveMatrix() {
         return primitiveMatrix;
     }
+    public boolean isValidIndex(Index index) {
+        try {
+            int cell = primitiveMatrix[index.row][index.column];
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+            return false;
+        }
+        return true;
+    }
 
 
 }

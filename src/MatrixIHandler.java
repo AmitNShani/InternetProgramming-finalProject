@@ -15,6 +15,8 @@ public class MatrixIHandler implements IHandler {
     private volatile boolean doWork = true;
     private TraversableMatrix traversableMatrix;
     private ReentrantReadWriteLock lock =  new ReentrantReadWriteLock();
+    ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 20, 10, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+
 
     @Override
     public void resetMembers() {
@@ -26,7 +28,7 @@ public class MatrixIHandler implements IHandler {
     }
 
     @Override
-    public void handle(InputStream fromClient, OutputStream toClient) throws IOException, ClassNotFoundException {
+    public void handle(InputStream fromClient, OutputStream toClient) throws Exception {
         /*
         Send data as bytes.
         Read data as bytes then transform to meaningful data
@@ -82,6 +84,31 @@ public class MatrixIHandler implements IHandler {
 //                        objectOutputStream.writeObject(reachables);
 //                    }
                 }
+                case "start index": {
+                    try {
+                        this.startIndex = (Index) objectInputStream.readObject();
+                    } catch (ClassCastException e) {
+                        throw new Exception("Invalid source");
+                    }
+                    break;
+                }
+
+                case "end index": {
+                    try {
+                        this.endIndex = (Index) objectInputStream.readObject();
+                    } catch (ClassCastException e) {
+                        throw new Exception("Invalid dest");
+                    }
+                    break;
+                }
+                case "getShortestPath":{ //task2
+                    Collection<Collection<Index>> path = getShortestPath();
+
+                    //return to client
+                    objectOutputStream.writeObject(path);
+
+                    break;
+                }
                 case "submarinesBoard":{
                         Submarines submarines = new Submarines();
                         int isValidSubmarine = submarines.checkValidateSubmarines(this.connectedComponents);
@@ -115,7 +142,7 @@ public class MatrixIHandler implements IHandler {
 
             List<Future<LinkedHashSet<Index>>> futureConnectedComponents = new ArrayList<>();
 
-            ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 10, 10, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+
 
             ThreadLocalDFS threadLocalDfsVisit = new ThreadLocalDFS<Index>();
             for (Index oneNode : allIndices){
@@ -166,6 +193,41 @@ public class MatrixIHandler implements IHandler {
 
             }
             return finalList.stream().sorted(Comparator.comparingInt(HashSet::size)).collect(Collectors.toList());
+    }
+    private Collection<Collection<Index>> getShortestPath()throws Exception {
+        validateMatrix();
+        TraversableMatrix traversableMatrix = new TraversableMatrix(this.matrix);
+        validateStartIndex(traversableMatrix);
+        validateEndIndex(traversableMatrix);
+
+        BfsVisit<Index> bfsVisit = new BfsVisit<>();
+        traversableMatrix.setStartIndex(this.startIndex);
+        return bfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+    }
+
+    private void validateStartIndex(TraversableMatrix traversableMatrix) throws Exception{
+        if(startIndex == null){
+            throw new Exception("Start index not found");
+        }
+        if (traversableMatrix.isValidIndex(this.startIndex)==false) {
+            throw new Exception("Source is out of matrix");
+        }
+    }
+
+
+    private void validateEndIndex(TraversableMatrix traversableMatrix) throws Exception{
+        if(endIndex == null){
+            throw new Exception("End index not found");
+        }
+        if (traversableMatrix.isValidIndex(this.endIndex)==false) {
+            throw new Exception("Source is out of matrix");
+        }
+    }
+
+    private void validateMatrix() throws Exception{
+        if(matrix == null){
+            throw new Exception("Matrix not found");
+        }
     }
 
 

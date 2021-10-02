@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class Client {
         // sending #1 matrix
         int[][] source = {
                 {1, 1, 0, 0, 0, 1, 0, 0, 1},
-                {1, 1, 0, 1, 0, 1, 0, 0, 1},
+                {1, 1, 1, 1, 0, 1, 0, 0, 1},
                 {1, 1, 0, 1, 0, 1, 0, 0, 1},
                 {0, 0, 1, 1, 0, 1, 0, 0, 1},
 
@@ -38,6 +39,19 @@ public class Client {
         }else {
             allCC.forEach(System.out::println);
         }
+
+        //task2
+        toServer.writeObject("start index");
+        toServer.writeObject(new Index(0, 0));
+        toServer.writeObject("end index");
+        toServer.writeObject(new Index(1, 2));
+        toServer.writeObject("getShortestPath");
+        Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
+        System.out.println("from client - Shortest path are:");
+        if(shortestPaths.size() != 0){
+            shortestPaths.forEach(result -> System.out.println(result));
+        }else
+            System.out.println("There are no available path between 2 indexes");
 
         // task 3 send "submarinesBoard" command and get if the board is valid.
         toServer.writeObject("submarinesBoard");

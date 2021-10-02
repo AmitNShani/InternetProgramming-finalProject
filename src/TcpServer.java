@@ -88,6 +88,8 @@ public class TcpServer {
                                     finalServerClientConnection.getOutputStream());
                         } catch (IOException | ClassNotFoundException ioException) {
                             ioException.printStackTrace();
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                         // terminate connection with client
                         // close all streams
