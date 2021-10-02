@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Client {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Socket socket =new Socket("127.0.0.1",8010);
+        Socket socket =new Socket("127.0.0.1",8011);
         System.out.println("client: Created Socket");
 
         ObjectOutputStream toServer=new ObjectOutputStream(socket.getOutputStream());
@@ -62,8 +62,6 @@ public class Client {
         else{
             System.out.println("there are " + numberOfSubmarines + " valid submarines");
         }
-
-
 
 
         toServer.writeObject("stop");

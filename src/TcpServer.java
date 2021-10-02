@@ -121,7 +121,7 @@ public class TcpServer {
     }
 
     public static void main(String[] args) {
-        TcpServer webServer = new TcpServer(8010);
+        TcpServer webServer = new TcpServer(8011);
         webServer.supportClients(new MatrixIHandler());
 
     }

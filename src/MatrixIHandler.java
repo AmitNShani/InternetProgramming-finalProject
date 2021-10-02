@@ -142,8 +142,6 @@ public class MatrixIHandler implements IHandler {
 
             List<Future<LinkedHashSet<Index>>> futureConnectedComponents = new ArrayList<>();
 
-
-
             ThreadLocalDFS threadLocalDfsVisit = new ThreadLocalDFS<Index>();
             for (Index oneNode : allIndices){
                 Callable<LinkedHashSet<Index>> threadCCSearch = () -> {
@@ -175,6 +173,7 @@ public class MatrixIHandler implements IHandler {
 
                 futureConnectedComponents.add(threadPool.submit(threadCCSearch));
                 }
+
             List<LinkedHashSet<Index>> finalList = new ArrayList<>();
             for (Future<LinkedHashSet<Index>> futureCC: futureConnectedComponents) {
                 try {
@@ -194,6 +193,8 @@ public class MatrixIHandler implements IHandler {
             }
             return finalList.stream().sorted(Comparator.comparingInt(HashSet::size)).collect(Collectors.toList());
     }
+
+
     private Collection<Collection<Index>> getShortestPath()throws Exception {
         validateMatrix();
         TraversableMatrix traversableMatrix = new TraversableMatrix(this.matrix);
@@ -203,6 +204,68 @@ public class MatrixIHandler implements IHandler {
         BfsVisit<Index> bfsVisit = new BfsVisit<>();
         traversableMatrix.setStartIndex(this.startIndex);
         return bfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+
+/*
+        List<Index> allIndices = this.matrix.getAllAccessibleNodes();
+        if (allIndices.size() == 0) return new ArrayList<>();
+
+        LinkedHashSet<Index> foundIndices = new LinkedHashSet<>();
+
+        List<Future<LinkedHashSet<Index>>> futureConnectedComponents = new ArrayList<>();
+
+        ThreadLocalDFS threadLocalDfsVisit = new ThreadLocalDFS<Index>();
+        for (Index oneNode : allIndices){
+            Callable<LinkedHashSet<Index>> threadCCSearch = () -> {
+                try {
+                    lock.readLock().lock();
+                    if (foundIndices.contains(oneNode)){
+                        return new LinkedHashSet<>();
+                    }
+                } finally {
+                    lock.readLock().unlock();
+                }
+
+                Set<Index> connectedComponent =  threadLocalDfsVisit
+                        .traverse(new TraversableMatrix(this.matrix, oneNode));
+                try {
+                    lock.writeLock().lock();
+                    if (!foundIndices.contains(oneNode)) {
+                        foundIndices.addAll(connectedComponent);
+                        return (LinkedHashSet<Index>) connectedComponent;
+                    }
+                } finally {
+                    lock.writeLock().unlock();
+                }
+                return new LinkedHashSet<>();
+
+
+            };  // end of callable
+
+
+            futureConnectedComponents.add(threadPool.submit(threadCCSearch));
+        }
+
+        List<LinkedHashSet<Index>> finalList = new ArrayList<>();
+        for (Future<LinkedHashSet<Index>> futureCC: futureConnectedComponents) {
+            try {
+                LinkedHashSet<Index> connectedComponent = futureCC.get();
+                lock.writeLock().lock();
+                if (connectedComponent.size() > 0){
+
+                    finalList.add(connectedComponent);
+                }
+
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } finally {
+                lock.writeLock().unlock();
+            }
+
+        }
+        return finalList.stream().sorted(Comparator.comparingInt(HashSet::size)).collect(Collectors.toList());
+
+        */
+
     }
 
     private void validateStartIndex(TraversableMatrix traversableMatrix) throws Exception{
