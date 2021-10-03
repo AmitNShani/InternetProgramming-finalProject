@@ -60,7 +60,7 @@ public class Client {
             System.out.println("Boo the board is empty and there is not even a single submarine");
         }
         else{
-            System.out.println("there are " + numberOfSubmarines + " valid submarines");
+            System.out.println("There are " + numberOfSubmarines + " valid submarines");
         }
 
 

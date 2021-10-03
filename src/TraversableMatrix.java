@@ -57,6 +57,11 @@ public class TraversableMatrix implements Traversable<Index> {
                 .collect(Collectors.toList());
     }
 
+/*    public Collection<Node<Index>> getMinWithStreams(Node<Index> someNode) {
+        return this.matrix.getNeighbors(someNode.getData())
+                .stream().filter(index -> matrix.getValue(index)<).map(index -> new Node<>(index,someNode))
+                .collect(Collectors.toList());
+    }*/
 
     @Override
     public String toString() {
