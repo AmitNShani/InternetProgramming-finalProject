@@ -103,10 +103,7 @@ public class MatrixIHandler implements IHandler {
                 }
                 case "getShortestPath":{ //task2
                     Collection<Collection<Index>> path = getShortestPath();
-
-                    //return to client
-                    objectOutputStream.writeObject(path);
-
+                    objectOutputStream.writeObject(path); //return to client
                     break;
                 }
                 case "submarinesBoard":{
@@ -201,9 +198,43 @@ public class MatrixIHandler implements IHandler {
         validateStartIndex(traversableMatrix);
         validateEndIndex(traversableMatrix);
 
-        BfsVisit<Index> bfsVisit = new BfsVisit<>();
+        ThreadLocalBfsVisit<Index> threadLocalBfsVisit = new ThreadLocalBfsVisit<>();
         traversableMatrix.setStartIndex(this.startIndex);
-        return bfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+        return threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+
+
+      /*
+      private Collection<Collection<Index>> getShortestPath()throws Exception {
+        ThreadLocalBfsVisit<Index> threadLocalBfsVisit = new ThreadLocalBfsVisit<>();
+        Thread seperateThread = new Thread(()->{
+            try {
+                validateMatrix();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            TraversableMatrix traversableMatrix = new TraversableMatrix(this.matrix);
+            try {
+                validateStartIndex(traversableMatrix);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                validateEndIndex(traversableMatrix);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Callable my = () -> {
+                traversableMatrix.setStartIndex(this.startIndex);
+                return threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+            };
+        });
+        seperateThread.run();
+        return (Collection<Collection<Index>>) threadLocalBfsVisit;
+    }
+       */
+
+
+
 
 /*
         List<Index> allIndices = this.matrix.getAllAccessibleNodes();

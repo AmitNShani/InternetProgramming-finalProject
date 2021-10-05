@@ -44,7 +44,7 @@ public class Client {
         toServer.writeObject("start index");
         toServer.writeObject(new Index(0, 0));
         toServer.writeObject("end index");
-        toServer.writeObject(new Index(1, 2));
+        toServer.writeObject(new Index(1, 3));
         toServer.writeObject("getShortestPath");
         Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
         System.out.println("from client - Shortest path are:");

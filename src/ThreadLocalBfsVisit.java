@@ -1,23 +1,25 @@
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
-public class BfsVisit<T> {
+public class ThreadLocalBfsVisit<T> {
 
-    ThreadLocal<LinkedList<Map.Entry<Node<T>, Integer>>> workingQueue = ThreadLocal.withInitial(LinkedList::new);
+    ThreadLocal<LinkedBlockingQueue<Map.Entry<Node<T>, Integer>>> workingQueue = ThreadLocal.withInitial(LinkedBlockingQueue::new);
     Collection<Collection<T>> Paths;
-    int shortestSteps;
+    int shortestPath;
 
-    public BfsVisit(){
+    public ThreadLocalBfsVisit(){
         Paths = new ArrayList<>();
-        shortestSteps = 0;
+        shortestPath =Integer.MAX_VALUE;;
     }
 
-
-    /**
+/**
      * Get all shortest allPaths from source to index
      * @param partOfGraph
      * @param destination
      * @return Collection of Collections of T
      */
+
 
     public Collection<Collection<T>> traverse(Traversable<T> partOfGraph,Node<T> destination){
         Node<T> source = partOfGraph.getOrigin();//get source from Traversable origin
@@ -44,15 +46,17 @@ public class BfsVisit<T> {
             {
             //check if not visited (as parent) && current path lower then shortest path
                 if (!reachable.getData().equals(destination.getData())) {
-                    if (!reachable.equals(currentKey.getParent()) && (current.getValue() < shortestSteps)) {
+                    if (!reachable.equals(currentKey.getParent()) && (current.getValue() < shortestPath)) {
                         //adding reachable to working list and increase steps by 1
                         workingQueue.get().add(new AbstractMap.SimpleEntry<>(reachable, current.getValue() + 1));
                     }
                 }
                 // if we reached the destination cell, this is the shortest allPaths
                 else {
-                        shortestSteps = current.getValue();//save the shortest Paths length
+                    shortestPath = current.getValue();//save the shortest Paths length
                     List<T> newPath = new ArrayList<>();//we start a new path
+                    newPath.add(reachable.getData());//adding destination to this path
+                    newPath.add(currentKey.getData());//adding current to this path
                     //go back to all node parents and add to list
                     Node<T> parent = currentKey.getParent();
                     while (parent != null){//add parents to the list
@@ -60,9 +64,7 @@ public class BfsVisit<T> {
                         newPath.add(currentKey.getData());
                         parent = currentKey.getParent();
                     }
-                    newPath.add(currentKey.getData());//adding current to this path
-                    newPath.add(reachable.getData());//adding destination to this path
-
+                    Collections.reverse(newPath);
                     //save new Paths in all paths
                     Paths.add(newPath);//save new Paths in all possible paths
                     break;
@@ -70,6 +72,14 @@ public class BfsVisit<T> {
             }
         }
 
-        return Paths;
+        return getMinWithStreams(Paths.toArray(),shortestPath+1);
+    }
+
+
+    public Collection<Collection<T>> getMinWithStreams(Object[] objects,int shortestPath ) {
+        return this.Paths.stream()
+                .filter(index -> index.size() == shortestPath)
+                .collect(Collectors.toList());
     }
 }
+
