@@ -29,14 +29,10 @@ public class Magen<T extends Runnable> {
     }
 
 
-    public Magen(BlockingQueue<T> paramBlockingQueue,
-                            Function<Runnable,T> runnableTFunction) {
-
-        //throwIfNull(paramBlockingQueue, runnableTFunction);
+    public Magen(BlockingQueue<T> paramBlockingQueue,Function<Runnable,T> runnableTFunction) {
 
         this.taskQueue = paramBlockingQueue;
         this.defaultFunction = runnableTFunction;
-
 
         this.consumerThread = new Thread(
                 () -> {
@@ -61,7 +57,7 @@ public class Magen<T extends Runnable> {
      * @throws InterruptedException
      */
     public void apply(final Runnable runnable) throws InterruptedException{
-        this.apply(runnable);
+        this.apply(runnable,defaultFunction);
     }
 
 
@@ -74,7 +70,7 @@ public class Magen<T extends Runnable> {
      * @throws InterruptedException
      */
     public<V> Future<V> apply(final Callable<V> callable) throws InterruptedException{
-        return this.apply(callable);
+        return this.apply(callable,defaultFunction);
     }
 
 
@@ -87,8 +83,7 @@ public class Magen<T extends Runnable> {
     public void apply(final Runnable runnable,Function<Runnable,T> runnableTFunction) throws InterruptedException {
         //set default function if didn't get any
         if(runnableTFunction==null){
-          //  runnableTFunction = this.
-            // ;
+            runnableTFunction = this.defaultFunction;
         }
 
         readWriteLock.readLock().lock();
@@ -128,7 +123,7 @@ public class Magen<T extends Runnable> {
 
         /*
          submit Runnable tasks to to the queue (as PriorityRunnable objects) using
-         the apply methods above
+         the apply methods aboves
          */
         service.apply(() -> System.out.println(
                 "There are more than 2 design patterns in this class"),
@@ -200,4 +195,53 @@ public class Magen<T extends Runnable> {
             this.consumerThread.join();//if not empty and still alive wait to finish
         }
 }
+
+
+
+    public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
+        Magen<PriorityRunnable> service =
+                new Magen<>(new PriorityBlockingQueue<>(),
+                        aRunnableTask -> new PriorityRunnable(aRunnableTask, 1));
+
+        /*
+         submit Runnable tasks to to the queue (as PriorityRunnable objects) using
+         the apply methods above
+         */
+        service.apply(() -> System.out.println(
+                "There are more than 2 design patterns in this class"),
+                runnable -> new PriorityRunnable(runnable,1));
+
+        service.apply(() -> System.out.println("a runnable"));
+
+        service.apply(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Fun");
+            }
+        }, runnable -> new PriorityRunnable(runnable,5));
+
+        Callable<String> stringCallable= () -> {
+            try {
+                Thread.sleep(5000); // wait until interrupt
+            } catch (InterruptedException e) {
+                System.out.println("interrupted");
+            }
+            return "callable string";
+        };
+        Future<String> futureString = service.apply(stringCallable);
+        Future<String> anotherFutureString = service.apply(stringCallable);
+
+
+        try {
+            System.out.println(futureString.get());
+            System.out.println(anotherFutureString.get(10000, TimeUnit.MILLISECONDS));
+        }catch (TimeoutException ex){
+
+        }
+
+        service.stop();
+        System.out.println("done");
+
+
+    }
 }
