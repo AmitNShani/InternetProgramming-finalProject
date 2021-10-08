@@ -24,13 +24,44 @@ public class Client {
 
         };
 
+        //(0,0) to (2,2)
+        int[][] source1 = {
+                {1, 1, 1},
+                {1, 1, 0},
+                {1, 0, 1},
+        };
+
+        //(0,0) to (2,4)
+        int[][] source2 = {
+                {1, 1, 1, 0, 0},
+                {1, 0, 0, 0, 0},
+                {1, 0, 0, 0, 1},
+                {1, 0, 1, 1, 0},
+                {1, 1, 1, 1, 0},
+        };
+
+        //(9,8) to (0,9)
+        int[][] source3 = {
+                {1, 1, 1, 0, 0, 1, 0, 0, 1, 1},
+                {1, 0, 0, 0, 0, 1, 0, 0, 1, 0},
+                {1, 0, 0, 0, 0, 1, 0, 0, 1, 1},
+                {1, 0, 1, 1, 0, 1, 0, 0, 1, 1},
+                {1, 0, 1, 1, 0, 1, 0, 0, 1, 0},
+                {1, 1, 1, 0, 0, 1, 0, 0, 1, 1},
+                {1, 0, 0, 0, 0, 1, 0, 0, 1, 0},
+                {1, 0, 0, 0, 0, 1, 0, 0, 1, 1},
+                {1, 0, 1, 1, 0, 1, 0, 0, 1, 1},
+                {1, 0, 1, 1, 0, 1, 0, 0, 1, 0},
+        };
 
         //send "matrix" command then write 2d array to socket
         toServer.writeObject("matrix");
-        toServer.writeObject(source);
+        toServer.writeObject(source3);
+
+        //toServer.writeObject(source1);
 
 
-        // send "getConnectedComponents" command and receive all the connected components
+        // task1- send "getConnectedComponents" command and receive all the connected components
         toServer.writeObject("getConnectedComponents");
         List<LinkedHashSet<Index>> allCC =  new ArrayList<>((List<LinkedHashSet<Index>>) fromServer.readObject());
 
@@ -42,9 +73,9 @@ public class Client {
 
         //task2
         toServer.writeObject("start index");
-        toServer.writeObject(new Index(0, 0));
+        toServer.writeObject(new Index(9, 8));
         toServer.writeObject("end index");
-        toServer.writeObject(new Index(1, 3));
+        toServer.writeObject(new Index(0, 9));
         toServer.writeObject("getShortestPath");
         Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
         System.out.println("from client - Shortest path are:");
@@ -52,6 +83,23 @@ public class Client {
             shortestPaths.forEach(result -> System.out.println(result));
         }else
             System.out.println("There are no available path between 2 indexes");
+
+
+        //
+        toServer.writeObject("matrix");
+        toServer.writeObject(source1);
+        toServer.writeObject("start index");
+        toServer.writeObject(new Index(0, 0));
+        toServer.writeObject("end index");
+        toServer.writeObject(new Index(2, 2));
+        toServer.writeObject("getShortestPath");
+        shortestPaths = (Collection<List<Index>>) fromServer.readObject();
+        System.out.println("from client - Shortest path are:");
+        if(shortestPaths.size() != 0){
+            shortestPaths.forEach(result -> System.out.println(result));
+        }else
+            System.out.println("There are no available path between 2 indexes");
+        //
 
         // task 3 send "submarinesBoard" command and get if the board is valid.
         toServer.writeObject("submarinesBoard");

@@ -26,6 +26,7 @@ public class ThreadLocalBfsVisit<T> {
         source.setParent(null);
         workingQueue.get().clear();
 
+        //if start or end are not 1 we return empty path
         if(partOfGraph.getValue(source.getData()) == 0 || partOfGraph.getValue(destination.getData()) == 0){
             return Paths;
         }
@@ -75,7 +76,7 @@ public class ThreadLocalBfsVisit<T> {
         return getMinWithStreams(Paths.toArray(),shortestPath+1);
     }
 
-
+//get all paths that equals to the shortest path length
     public Collection<Collection<T>> getMinWithStreams(Object[] objects,int shortestPath ) {
         return this.Paths.stream()
                 .filter(index -> index.size() == shortestPath)

@@ -1,5 +1,6 @@
 package MagenTask;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -11,6 +12,7 @@ public class Magen<T extends Runnable> {
     protected final BlockingQueue<T> taskQueue;
     protected final Thread consumerThread;
     private final ReentrantReadWriteLock readWriteLock=new ReentrantReadWriteLock();
+    List<PriorityRunnable> queueTskLeft;
 
     public Magen(Function<Runnable, T> defaultFunction, BlockingQueue<T> paramBlockingQueue) {
         this.defaultFunction = defaultFunction;
@@ -114,19 +116,15 @@ public class Magen<T extends Runnable> {
     }
 
 
-
-
     public void submitTask(final Runnable runnable) throws InterruptedException{
-        Magen<PriorityRunnable> service =
-                new Magen<>(new PriorityBlockingQueue<>(),
+        Magen<PriorityRunnable> service = new Magen<>(new PriorityBlockingQueue<>(),
                        aRunnableTask -> new PriorityRunnable(aRunnableTask, 1));
 
         /*
          submit Runnable tasks to to the queue (as PriorityRunnable objects) using
          the apply methods aboves
          */
-        service.apply(() -> System.out.println(
-                "There are more than 2 design patterns in this class"),
+        service.apply(() -> System.out.println("There are more than 2 design patterns in this class"),
                 runnable1 -> new PriorityRunnable(runnable1,1));
 
         service.apply(() -> System.out.println("a runnable"));
@@ -149,7 +147,6 @@ public class Magen<T extends Runnable> {
         Future<String> futureString = service.apply(stringCallable);
         Future<String> anotherFutureString = service.apply(stringCallable);
 
-
         try {
             System.out.println(futureString.get());
             System.out.println(anotherFutureString.get(10000, TimeUnit.MILLISECONDS));
@@ -169,33 +166,24 @@ public class Magen<T extends Runnable> {
      * @throws InterruptedException
      */
     public void stop() throws InterruptedException {
-        if(taskQueue.isEmpty())
+        if (taskQueue.isEmpty())
             //Lock and check if stop didn't changed while waiting
             readWriteLock.writeLock().lock();
-            try {
-                if (!stop) {
-                    stop = true;
-                    this.waitUntilDone();
-                    this.consumerThread.interrupt();
+        try {
+            if (!stop) {
+                stop = true;
+                //Check if thread is still alive and Wait until thread finish
+                if (this.consumerThread.isAlive() && !taskQueue.isEmpty()) {
+                    this.consumerThread.join();//if not empty and still alive wait to terminate
                 }
-            } catch (InterruptedException interruptedException) {
-                throw interruptedException;
-            } finally {
-                readWriteLock.writeLock().unlock();
+                this.consumerThread.interrupt();
             }
+        } catch (InterruptedException interruptedException) {
+            throw interruptedException;
+        } finally {
+            readWriteLock.writeLock().unlock();
         }
-
-    /**
-     * Check if thread is still alive
-     * Wait until thread finish
-     * @throws InterruptedException
-     */
-    public void waitUntilDone() throws InterruptedException {
-        if(this.consumerThread.isAlive() && !taskQueue.isEmpty()) {
-            this.consumerThread.join();//if not empty and still alive wait to finish
-        }
-}
-
+    }
 
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
@@ -240,6 +228,7 @@ public class Magen<T extends Runnable> {
         }
 
         service.stop();
+       // service.stopNow();
         System.out.println("done");
 
 

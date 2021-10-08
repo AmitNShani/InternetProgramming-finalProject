@@ -197,11 +197,17 @@ public class MatrixIHandler implements IHandler {
         TraversableMatrix traversableMatrix = new TraversableMatrix(this.matrix);
         validateStartIndex(traversableMatrix);
         validateEndIndex(traversableMatrix);
-
-        ThreadLocalBfsVisit<Index> threadLocalBfsVisit = new ThreadLocalBfsVisit<>();
-        traversableMatrix.setStartIndex(this.startIndex);
-        return threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
-
+        ThreadLocalBfsVisit<Index> threadLocalBfsVisit;
+        Collection<Collection<Index>> traverseCollection;
+        try {
+            lock.writeLock().lock();
+            threadLocalBfsVisit= new ThreadLocalBfsVisit<>();
+            traversableMatrix.setStartIndex(this.startIndex);
+            traverseCollection= threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+        } finally {
+            lock.writeLock().unlock();
+        }
+        return traverseCollection;
 
       /*
       private Collection<Collection<Index>> getShortestPath()throws Exception {
@@ -323,6 +329,4 @@ public class MatrixIHandler implements IHandler {
             throw new Exception("Matrix not found");
         }
     }
-
-
 }
