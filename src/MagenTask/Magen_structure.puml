@@ -1,0 +1,135 @@
+@startuml
+
+/' diagram meta data start
+config=StructureConfiguration;
+{
+  "projectClassification": {
+    "searchMode": "OpenProject", // OpenProject, AllProjects
+    "includedProjects": "",
+    "pathEndKeywords": "*.impl",
+    "isClientPath": "",
+    "isClientName": "",
+    "isTestPath": "",
+    "isTestName": "",
+    "isMappingPath": "",
+    "isMappingName": "",
+    "isDataAccessPath": "",
+    "isDataAccessName": "",
+    "isDataStructurePath": "",
+    "isDataStructureName": "",
+    "isInterfaceStructuresPath": "",
+    "isInterfaceStructuresName": "",
+    "isEntryPointPath": "",
+    "isEntryPointName": ""
+  },
+  "graphRestriction": {
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "removeByInheritance": "", // inheritance/annotation based filtering is done in a second step
+    "removeByAnnotation": "",
+    "removeByClassPackage": "", // cleanup the graph after inheritance/annotation based filtering is done
+    "removeByClassName": "",
+    "cutMappings": false,
+    "cutEnum": true,
+    "cutTests": true,
+    "cutClient": true,
+    "cutDataAccess": true,
+    "cutInterfaceStructures": true,
+    "cutDataStructures": true,
+    "cutGetterAndSetter": true,
+    "cutConstructors": true
+  },
+  "graphTraversal": {
+    "forwardDepth": 3,
+    "backwardDepth": 3,
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "hideMappings": false,
+    "hideDataStructures": false,
+    "hidePrivateMethods": true,
+    "hideInterfaceCalls": true, // indirection: implementation -> interface (is hidden) -> implementation
+    "onlyShowApplicationEntryPoints": false // root node is included
+  },
+  "details": {
+    "aggregation": "GroupByClass", // ByClass, GroupByClass, None
+    "showClassGenericTypes": true,
+    "showMethods": true,
+    "showMethodParameterNames": true,
+    "showMethodParameterTypes": true,
+    "showMethodReturnType": true,
+    "showPackageLevels": 2,
+    "showDetailedClassStructure": true
+  },
+  "rootClass": "MagenTask.Magen"
+}
+diagram meta data end '/
+
+
+
+digraph g {
+    rankdir="TB"
+    splines=polyline
+    
+
+'nodes 
+subgraph cluster_266832703 { 
+   	label=MagenTask
+	labeljust=l
+	fillcolor="#ececec"
+	style=filled
+   
+   Magen266832703[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Magen&lt;T extends Runnable&gt;</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >#   consumerThread: Thread [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   queueTaskLeft: List&lt;PriorityRunnable&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   readWriteLock: ReentrantReadWriteLock [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   stop: boolean [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   stopNow: boolean [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   taskQueue: BlockingQueue&lt;PriorityRunnable&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ main(args: String[])</TD></TR>
+<TR><TD ALIGN="LEFT" >+ stop()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ stopNow(): List&lt;PriorityRunnable&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ submitTask(runnable: Runnable)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PriorityRunnable266832703[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PriorityRunnable</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   priority: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   runnable: Runnable [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ compareTo(second: PriorityRunnable): int</TD></TR>
+<TR><TD ALIGN="LEFT" >+ run()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+'edges    
+Magen266832703 -> PriorityRunnable266832703[label="queueTaskLeft
+[0..*]"];
+Magen266832703 -> PriorityRunnable266832703[label="taskQueue
+[0..*]"];
+    
+}
+@enduml

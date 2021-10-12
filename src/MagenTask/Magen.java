@@ -1,21 +1,23 @@
 package MagenTask;
 
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 
 public class Magen<T extends Runnable> {
-    private final Function<Runnable, T> defaultFunction;
     protected boolean stop = false;
     protected boolean stopNow= false;
-    protected final BlockingQueue<T> taskQueue;
+    protected final BlockingQueue<PriorityRunnable> taskQueue;
     protected final Thread consumerThread;
     private final ReentrantReadWriteLock readWriteLock=new ReentrantReadWriteLock();
-    List<PriorityRunnable> queueTskLeft;
+    List<PriorityRunnable> queueTaskLeft=new ArrayList<>();
 
-    public Magen(Function<Runnable, T> defaultFunction, BlockingQueue<T> paramBlockingQueue) {
-        this.defaultFunction = defaultFunction;
+    /**
+     * ctor of Magen class
+     * @param paramBlockingQueue
+     */
+    public Magen(BlockingQueue<PriorityRunnable> paramBlockingQueue) {
         this.taskQueue = paramBlockingQueue;
         this.consumerThread = new Thread(
                 () -> {
@@ -31,69 +33,15 @@ public class Magen<T extends Runnable> {
     }
 
 
-    public Magen(BlockingQueue<T> paramBlockingQueue,Function<Runnable,T> runnableTFunction) {
-
-        this.taskQueue = paramBlockingQueue;
-        this.defaultFunction = runnableTFunction;
-
-        this.consumerThread = new Thread(
-                () -> {
-                    while ((!stop || !this.taskQueue.isEmpty()) &&
-                            (!stopNow)) {
-                        int a = 1;
-                        try {
-                            taskQueue.take().run();
-                        } catch (InterruptedException e) {
-                            //e.printStackTrace();
-                        }
-                    }
-                });
-
-        this.consumerThread.start();
-    }
-
     /**
-     * Add runnable to queue based on default runnableTFunction
-     * Use apply(final Runnable runnable,Function<Runnable,T> runnableTFunction)
+     * Submit runnable to queue as priority runnable
      * @param runnable
-     * @throws InterruptedException
      */
-    public void apply(final Runnable runnable) throws InterruptedException{
-        this.apply(runnable,defaultFunction);
-    }
-
-
-    /**
-     * Add Callable to queue based on default runnableTFunction
-     * Use apply(final Callable<V> callable,Function<Runnable,T> runnableTFunction)
-     * @param callable
-     * @param <V>
-     * @return Future <V>
-     * @throws InterruptedException
-     */
-    public<V> Future<V> apply(final Callable<V> callable) throws InterruptedException{
-        return this.apply(callable,defaultFunction);
-    }
-
-
-    /**
-     * Add runnable to the queue based on runnableTFunction
-     * @param runnable
-     * @param runnableTFunction
-     * @throws InterruptedException
-     */
-    public void apply(final Runnable runnable,Function<Runnable,T> runnableTFunction) throws InterruptedException {
-        //set default function if didn't get any
-        if(runnableTFunction==null){
-            runnableTFunction = this.defaultFunction;
-        }
-
+    public void submitTask(final Runnable runnable) {
         readWriteLock.readLock().lock();
-        try {
-            if (!stop)
-                taskQueue.offer(runnableTFunction.apply(runnable));
-        }catch (Exception e){
-            throw e;
+        try { // to avoid deadlock
+            if (!stop && !stopNow) // if we don't want to stop now
+                taskQueue.offer((PriorityRunnable) runnable);//add runnable to queue
         }finally {
             readWriteLock.readLock().unlock();
         }
@@ -101,72 +49,12 @@ public class Magen<T extends Runnable> {
 
 
     /**
-     * Gets Callable,converts to FutureTask.
-     * Add as a runnable to the queue and returns Future
-     * @param callable
-     * @param runnableTFunction
-     * @param <V>
-     * @return Future<V>
-     * @throws InterruptedException
-     */
-    public<V> Future<V> apply(final Callable<V> callable, Function<Runnable,T> runnableTFunction) throws InterruptedException {
-        FutureTask<V> futureTask = new FutureTask<>(callable);
-        this.apply(futureTask, runnableTFunction);
-        return futureTask;
-    }
-
-
-    public void submitTask(final Runnable runnable) throws InterruptedException{
-        Magen<PriorityRunnable> service = new Magen<>(new PriorityBlockingQueue<>(),
-                       aRunnableTask -> new PriorityRunnable(aRunnableTask, 1));
-
-        /*
-         submit Runnable tasks to to the queue (as PriorityRunnable objects) using
-         the apply methods aboves
-         */
-        service.apply(() -> System.out.println("There are more than 2 design patterns in this class"),
-                runnable1 -> new PriorityRunnable(runnable1,1));
-
-        service.apply(() -> System.out.println("a runnable"));
-
-        service.apply(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("Fun");
-            }
-        }, runnable2 -> new PriorityRunnable(runnable2,5));
-
-        Callable<String> stringCallable= () -> {
-            try {
-                Thread.sleep(5000); // wait until interrupt
-            } catch (InterruptedException e) {
-                System.out.println("interrupted");
-            }
-            return "callable string";
-        };
-        Future<String> futureString = service.apply(stringCallable);
-        Future<String> anotherFutureString = service.apply(stringCallable);
-
-        try {
-            System.out.println(futureString.get());
-            System.out.println(anotherFutureString.get(10000, TimeUnit.MILLISECONDS));
-        }catch (TimeoutException | ExecutionException ex){
-
-        }
-
-        service.stop();
-        System.out.println("done");
-
-    }
-
-    /**
-     * Stop the queue based on wait param.
-     * if wait is true, mark as stop and call waitUntilDone
-     * if wait is false, mark as stopNow and interrupt the thread
+     * Stop the queue :
+     * mark as stop and check if the task is not empty and thread is still alive -
+     * if so wait till the thread is terminate and then interrupt him
      * @throws InterruptedException
      */
     public void stop() throws InterruptedException {
-        if (taskQueue.isEmpty())
             //Lock and check if stop didn't changed while waiting
             readWriteLock.writeLock().lock();
         try {
@@ -185,50 +73,178 @@ public class Magen<T extends Runnable> {
         }
     }
 
+    /**
+     * StopNow : stop the queue now and add task that was left in the queue to queueTaskLeft
+     * @return queueTaskLeft (tasks that wasn't done)
+     * @throws InterruptedException
+     */
+    public List<PriorityRunnable> stopNow() throws InterruptedException {
+        queueTaskLeft=new List<PriorityRunnable>() {
+            @Override
+            public int size() {
+                return 0;
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return false;
+            }
+
+            @Override
+            public boolean contains(Object o) {
+                return false;
+            }
+
+            @Override
+            public Iterator<PriorityRunnable> iterator() {
+                return null;
+            }
+
+            @Override
+            public Object[] toArray() {
+                return new Object[0];
+            }
+
+            @Override
+            public <T> T[] toArray(T[] a) {
+                return null;
+            }
+
+            @Override
+            public boolean add(PriorityRunnable priorityRunnable) {
+                return false;
+            }
+
+            @Override
+            public boolean remove(Object o) {
+                return false;
+            }
+
+            @Override
+            public boolean containsAll(Collection<?> c) {
+                return false;
+            }
+
+            @Override
+            public boolean addAll(Collection<? extends PriorityRunnable> c) {
+                return false;
+            }
+
+            @Override
+            public boolean addAll(int index, Collection<? extends PriorityRunnable> c) {
+                return false;
+            }
+
+            @Override
+            public boolean removeAll(Collection<?> c) {
+                return false;
+            }
+
+            @Override
+            public boolean retainAll(Collection<?> c) {
+                return false;
+            }
+
+            @Override
+            public void clear() {
+
+            }
+
+            @Override
+            public PriorityRunnable get(int index) {
+                return null;
+            }
+
+            @Override
+            public PriorityRunnable set(int index, PriorityRunnable element) {
+                return null;
+            }
+
+            @Override
+            public void add(int index, PriorityRunnable element) {
+
+            }
+
+            @Override
+            public PriorityRunnable remove(int index) {
+                return null;
+            }
+
+            @Override
+            public int indexOf(Object o) {
+                return 0;
+            }
+
+            @Override
+            public int lastIndexOf(Object o) {
+                return 0;
+            }
+
+            @Override
+            public ListIterator<PriorityRunnable> listIterator() {
+                return null;
+            }
+
+            @Override
+            public ListIterator<PriorityRunnable> listIterator(int index) {
+                return null;
+            }
+
+            @Override
+            public List<PriorityRunnable> subList(int fromIndex, int toIndex) {
+                return null;
+            }
+        };
+            //Lock and check if stop didn't changed while waiting
+            readWriteLock.writeLock().lock();
+            try {
+                if (!stopNow) {
+                    stopNow = true;
+                    // if there is any task left add them to the queueTaskLeft
+                    if(!taskQueue.isEmpty())
+                        queueTaskLeft.add((PriorityRunnable) taskQueue.remove());
+                    this.consumerThread.interrupt();
+                }
+            } catch (Exception e) {
+                throw e;
+            } finally {
+                readWriteLock.writeLock().unlock();
+            }
+        return queueTaskLeft;
+    }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
-        Magen<PriorityRunnable> service =
-                new Magen<>(new PriorityBlockingQueue<>(),
-                        aRunnableTask -> new PriorityRunnable(aRunnableTask, 1));
+        Magen<PriorityRunnable> service = new Magen<>(new PriorityBlockingQueue<>(1));
+
+        service.submitTask(new PriorityRunnable(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Task1-priority 1");
+            }
+        }));
 
         /*
          submit Runnable tasks to to the queue (as PriorityRunnable objects) using
          the apply methods above
          */
-        service.apply(() -> System.out.println(
-                "There are more than 2 design patterns in this class"),
-                runnable -> new PriorityRunnable(runnable,1));
-
-        service.apply(() -> System.out.println("a runnable"));
-
-        service.apply(new Runnable() {
+        service.submitTask(new PriorityRunnable(new Runnable() {
             @Override
             public void run() {
-                System.out.println("Fun");
+                System.out.println("Task2-priority 3");
             }
-        }, runnable -> new PriorityRunnable(runnable,5));
+        },3));
 
-        Callable<String> stringCallable= () -> {
-            try {
-                Thread.sleep(5000); // wait until interrupt
-            } catch (InterruptedException e) {
-                System.out.println("interrupted");
+
+        service.submitTask(new PriorityRunnable(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Task3-priority -2");
             }
-            return "callable string";
-        };
-        Future<String> futureString = service.apply(stringCallable);
-        Future<String> anotherFutureString = service.apply(stringCallable);
+        },-2));
 
-
-        try {
-            System.out.println(futureString.get());
-            System.out.println(anotherFutureString.get(10000, TimeUnit.MILLISECONDS));
-        }catch (TimeoutException ex){
-
-        }
 
         service.stop();
-       // service.stopNow();
+        //service.stopNow();
         System.out.println("done");
 
 

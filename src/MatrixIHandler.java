@@ -65,7 +65,7 @@ public class MatrixIHandler implements IHandler {
                     break;
                 }
 
-                case "getConnectedComponents":{
+                case "getConnectedComponents":{ //task1
                     try {
                         List<LinkedHashSet<Index>> allCC = getConnectedComponents();
                         this.connectedComponents = allCC;
@@ -75,14 +75,6 @@ public class MatrixIHandler implements IHandler {
                     }
                     break;
 
-
-
-//                    if(this.matrix!=null){
-//                        List<Index> reachables = new ArrayList<>(this.matrix.getReachables(tempIndex));
-//                        System.out.println("Server: neighbors of "+ tempIndex + ":  " + reachables);
-//                        // send to socket's outputstream
-//                        objectOutputStream.writeObject(reachables);
-//                    }
                 }
                 case "start index": {
                     try {
@@ -106,7 +98,7 @@ public class MatrixIHandler implements IHandler {
                     objectOutputStream.writeObject(path); //return to client
                     break;
                 }
-                case "submarinesBoard":{
+                case "submarinesBoard":{ //task3
                         Submarines submarines = new Submarines();
                         int isValidSubmarine = submarines.checkValidateSubmarines(this.connectedComponents);
                         objectOutputStream.writeObject(isValidSubmarine);
@@ -119,11 +111,6 @@ public class MatrixIHandler implements IHandler {
                 }
             }
         }
-
-
-
-
-
     }
 
     /**
@@ -191,142 +178,50 @@ public class MatrixIHandler implements IHandler {
             return finalList.stream().sorted(Comparator.comparingInt(HashSet::size)).collect(Collectors.toList());
     }
 
-
+    /**
+     * get shortest path of matrix from source to destination indexes.
+     * @return Collection<Collection<Index>> of the shortest path
+     * @throws Exception
+     */
     private Collection<Collection<Index>> getShortestPath()throws Exception {
         validateMatrix();
         TraversableMatrix traversableMatrix = new TraversableMatrix(this.matrix);
-        validateStartIndex(traversableMatrix);
-        validateEndIndex(traversableMatrix);
+        validateIndexes(traversableMatrix);//validate end and start indexes
         ThreadLocalBfsVisit<Index> threadLocalBfsVisit;
         Collection<Collection<Index>> traverseCollection;
-        try {
+        try {// to avoid the deadlock situations
             lock.writeLock().lock();
-            threadLocalBfsVisit= new ThreadLocalBfsVisit<>();
+            threadLocalBfsVisit = new ThreadLocalBfsVisit<>();
             traversableMatrix.setStartIndex(this.startIndex);
-            traverseCollection= threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
+            traverseCollection = threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
         } finally {
             lock.writeLock().unlock();
         }
         return traverseCollection;
-
-      /*
-      private Collection<Collection<Index>> getShortestPath()throws Exception {
-        ThreadLocalBfsVisit<Index> threadLocalBfsVisit = new ThreadLocalBfsVisit<>();
-        Thread seperateThread = new Thread(()->{
-            try {
-                validateMatrix();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            TraversableMatrix traversableMatrix = new TraversableMatrix(this.matrix);
-            try {
-                validateStartIndex(traversableMatrix);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                validateEndIndex(traversableMatrix);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Callable my = () -> {
-                traversableMatrix.setStartIndex(this.startIndex);
-                return threadLocalBfsVisit.traverse(traversableMatrix, new Node(this.endIndex));
-            };
-        });
-        seperateThread.run();
-        return (Collection<Collection<Index>>) threadLocalBfsVisit;
-    }
-       */
-
-
-
-
-/*
-        List<Index> allIndices = this.matrix.getAllAccessibleNodes();
-        if (allIndices.size() == 0) return new ArrayList<>();
-
-        LinkedHashSet<Index> foundIndices = new LinkedHashSet<>();
-
-        List<Future<LinkedHashSet<Index>>> futureConnectedComponents = new ArrayList<>();
-
-        ThreadLocalDFS threadLocalDfsVisit = new ThreadLocalDFS<Index>();
-        for (Index oneNode : allIndices){
-            Callable<LinkedHashSet<Index>> threadCCSearch = () -> {
-                try {
-                    lock.readLock().lock();
-                    if (foundIndices.contains(oneNode)){
-                        return new LinkedHashSet<>();
-                    }
-                } finally {
-                    lock.readLock().unlock();
-                }
-
-                Set<Index> connectedComponent =  threadLocalDfsVisit
-                        .traverse(new TraversableMatrix(this.matrix, oneNode));
-                try {
-                    lock.writeLock().lock();
-                    if (!foundIndices.contains(oneNode)) {
-                        foundIndices.addAll(connectedComponent);
-                        return (LinkedHashSet<Index>) connectedComponent;
-                    }
-                } finally {
-                    lock.writeLock().unlock();
-                }
-                return new LinkedHashSet<>();
-
-
-            };  // end of callable
-
-
-            futureConnectedComponents.add(threadPool.submit(threadCCSearch));
-        }
-
-        List<LinkedHashSet<Index>> finalList = new ArrayList<>();
-        for (Future<LinkedHashSet<Index>> futureCC: futureConnectedComponents) {
-            try {
-                LinkedHashSet<Index> connectedComponent = futureCC.get();
-                lock.writeLock().lock();
-                if (connectedComponent.size() > 0){
-
-                    finalList.add(connectedComponent);
-                }
-
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } finally {
-                lock.writeLock().unlock();
-            }
-
-        }
-        return finalList.stream().sorted(Comparator.comparingInt(HashSet::size)).collect(Collectors.toList());
-
-        */
-
     }
 
-    private void validateStartIndex(TraversableMatrix traversableMatrix) throws Exception{
-        if(startIndex == null){
-            throw new Exception("Start index not found");
-        }
-        if (traversableMatrix.isValidIndex(this.startIndex)==false) {
-            throw new Exception("Source is out of matrix");
-        }
-    }
-
-
-    private void validateEndIndex(TraversableMatrix traversableMatrix) throws Exception{
-        if(endIndex == null){
-            throw new Exception("End index not found");
-        }
-        if (traversableMatrix.isValidIndex(this.endIndex)==false) {
-            throw new Exception("Source is out of matrix");
-        }
-    }
-
-    private void validateMatrix() throws Exception{
+    /**
+     * validate that the matrix is not null
+     * @throws NullPointerException
+     */
+    private void validateMatrix() throws NullPointerException{
         if(matrix == null){
-            throw new Exception("Matrix not found");
+            throw new NullPointerException("Matrix not found");
+        }
+    }
+
+    /**
+     * validate start and end indexes - make sure it's between matrix boarders
+     * @param traversableMatrix
+     * @throws IndexOutOfBoundsException
+     */
+    private void validateIndexes(TraversableMatrix traversableMatrix) throws IndexOutOfBoundsException{
+        if((startIndex == null) || (endIndex == null))
+        {
+            throw new IndexOutOfBoundsException("Index not found");
+        }
+        if ((traversableMatrix.isValidIndex(this.startIndex)==false) || (traversableMatrix.isValidIndex(this.endIndex)==false)){
+            throw new IndexOutOfBoundsException("Source is out of matrix");
         }
     }
 }

@@ -20,7 +20,6 @@ public class PriorityRunnable implements Runnable, Comparable<PriorityRunnable>{
         this.runnable= (Runnable) aRunnableTask;
         this.priority = priority;
     }
-    
 
 
     public int getPriority() {

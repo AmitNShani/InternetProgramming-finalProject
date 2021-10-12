@@ -14,7 +14,7 @@ public class ThreadLocalBfsVisit<T> {
     }
 
 /**
-     * Get all shortest allPaths from source to index
+     * Get all shortest Paths from source to index
      * @param partOfGraph
      * @param destination
      * @return Collection of Collections of T
@@ -76,7 +76,12 @@ public class ThreadLocalBfsVisit<T> {
         return getMinWithStreams(Paths.toArray(),shortestPath+1);
     }
 
-//get all paths that equals to the shortest path length
+    /**
+     * get all paths that equals to the shortest path length
+     * @param objects
+     * @param shortestPath
+     * @return Collection of Collections of T
+     */
     public Collection<Collection<T>> getMinWithStreams(Object[] objects,int shortestPath ) {
         return this.Paths.stream()
                 .filter(index -> index.size() == shortestPath)
