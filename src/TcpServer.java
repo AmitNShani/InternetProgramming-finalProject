@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TcpServer {
     /*
@@ -32,6 +33,7 @@ public class TcpServer {
     private volatile boolean stopServer; // volatile - stopServer variable is saved in RAM memory
     private ThreadPoolExecutor threadPool, threadPoolClientSocket; // handle each client in a separate thread
     private IHandler requestHandler; // what is the type of clients' tasks
+    private ReentrantReadWriteLock lock =  new ReentrantReadWriteLock();
 
 
     public TcpServer(int port){
@@ -112,12 +114,18 @@ public class TcpServer {
     }
 
     public void stop(){
-        if(!stopServer){
-            stopServer = true;
-            if(threadPool!=null)
-                threadPool.shutdown();
+        try {
+            lock.readLock().lock();
+            if (!stopServer) {
+                lock.writeLock().lock();
+                stopServer = true;
+                if (threadPool != null)
+                    threadPool.shutdown();
+                lock.writeLock().unlock();
+            }
+        }finally {
+            lock.readLock().unlock();
         }
-
     }
 
     public static void main(String[] args) {
