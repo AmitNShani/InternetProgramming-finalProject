@@ -104,7 +104,13 @@ public class MatrixIHandler implements IHandler {
                         objectOutputStream.writeObject(isValidSubmarine);
                     break;
                 }
-
+                //Task 4
+                case "getLightestPath":{
+                    Collection<Collection<Index>> lightestPaths = getLightestPaths();
+                    //return to client
+                    objectOutputStream.writeObject(lightestPaths);
+                    break;
+                }
                 case "stop":{
                     doWork = false;
                     break;
@@ -208,6 +214,22 @@ public class MatrixIHandler implements IHandler {
         if(matrix == null){
             throw new NullPointerException("Matrix not found");
         }
+    }
+
+    private Collection<Collection<Index>> getLightestPaths() throws Exception {
+        validateMatrix();
+        TraversableMatrix traversableMatrix = new TraversableMatrix(matrix);
+        validateIndexes(traversableMatrix);
+
+        DijkstraVisit<Index> DijkstraVisit = new DijkstraVisit<>();
+
+        Collection<Map.Entry<List<Index>, Integer>> pairs = DijkstraVisit.getLightestPaths(traversableMatrix, new ArrayList<>(), new Node<>(startIndex), new Node<>(endIndex));
+        return pairs.stream().map(p -> reverse(p.getKey())).collect(Collectors.toList());
+    }
+
+    private List<Index> reverse(List<Index> list){
+        Collections.reverse(list);
+        return list;
     }
 
     /**

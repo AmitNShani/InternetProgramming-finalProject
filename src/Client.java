@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Client {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Socket socket =new Socket("127.0.0.1",8011);
+        Socket socket =new Socket("127.0.0.1",8010);
         System.out.println("client: Created Socket");
 
         ObjectOutputStream toServer=new ObjectOutputStream(socket.getOutputStream());
@@ -53,11 +53,17 @@ public class Client {
                 {1, 0, 1, 1, 0, 1, 0, 0, 1, 1},
                 {1, 0, 1, 1, 0, 1, 0, 0, 1, 0},
         };
+
+        int[][] source4 = {
+                {100, 100, 100},
+                {300, 900, 500},
+                {100, 100, 100},
+        };
         //matrix : source1
 
         //send "matrix" command then write 2d array to socket
         toServer.writeObject("matrix");
-        toServer.writeObject(source1); //option1
+        toServer.writeObject(source4); //option1
 
         //toServer.writeObject(source2);//option2
 
@@ -129,6 +135,20 @@ public class Client {
             System.out.println("Task 3-There are " + numberOfSubmarines + " valid submarines");
         }
 
+        // task 4
+        toServer.writeObject("start index");
+        toServer.writeObject(new Index(1, 0));
+        toServer.writeObject("end index");
+        toServer.writeObject(new Index(1, 2));
+
+        toServer.writeObject("getLightestPath");
+        Collection<List<Index>> lightestPaths = (Collection<List<Index>>) fromServer.readObject();
+        System.out.println("from client - Lightest paths are: ");
+        if(lightestPaths.size() == 0) {
+            System.out.println("There are no available allPaths between 2 indexes");
+        }else{
+            lightestPaths.forEach(System.out::println);
+        }
 
         toServer.writeObject("stop");
         System.out.println("client: Close all streams");
