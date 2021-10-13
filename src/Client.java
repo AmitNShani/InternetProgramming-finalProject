@@ -16,7 +16,7 @@ public class Client {
         ObjectInputStream fromServer=new ObjectInputStream(socket.getInputStream());
 
 
-        //(0,0) to (1,1)
+        //(0,0) to (2,2)
         int[][] source1 = {
                 {1, 1, 0},
                 {1, 1, 0},
@@ -27,7 +27,7 @@ public class Client {
         int[][] source2 = {
                 {1, 1, 1, 0, 0},
                 {1, 0, 0, 0, 0},
-                {1, 0, 0, 0, 1},
+                {1, 1, 0, 0, 1},
                 {1, 0, 1, 1, 0},
                 {1, 1, 1, 1, 0},
         };
@@ -52,13 +52,18 @@ public class Client {
                 {100, 100, 100},
         };
 
+        int[][] source5 = {
+                {1, 1, 0, 0, 1},
+                {1, 1, 0, 1, 1},
+                {0, 0, 0, 0, 1},
+                {1, 0, 1, 1, 1},
+                {1, 0, 1, 1, 1},
+        };
+
         //send "matrix" command then write 2d array to socket
         toServer.writeObject("matrix");
-        toServer.writeObject(source1); //option1
+        toServer.writeObject(source1);
 
-        //toServer.writeObject(source2);//option2
-
-        //toServer.writeObject(source3);//option3
 
 // task1- send "getConnectedComponents" command and receive all the connected components
         toServer.writeObject("getConnectedComponents");
@@ -74,10 +79,11 @@ public class Client {
         }
 
         //task2 -option 1
+
         toServer.writeObject("start index");
         toServer.writeObject(new Index(0, 0));
         toServer.writeObject("end index");
-        toServer.writeObject(new Index(1, 1));
+        toServer.writeObject(new Index(2, 1));
         toServer.writeObject("getShortestPath");
         Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
         System.out.println("Task 2:\nShortest path are:");
@@ -120,6 +126,7 @@ public class Client {
 */
 
 // task 3 send "submarinesBoard" command and get if the board is valid.
+
         toServer.writeObject("submarinesBoard");
         int numberOfSubmarines = (int) fromServer.readObject();
         System.out.println("\nTask 3(submarines):");

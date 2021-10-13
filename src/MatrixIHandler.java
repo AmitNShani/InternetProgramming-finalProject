@@ -44,12 +44,14 @@ public class MatrixIHandler implements IHandler {
 
             switch (objectInputStream.readObject().toString()){
                 case "matrix":{
+                    lock.writeLock().lock();
                     // client will now send a 2d array. handler will create a matrix object
                     int[][] tempArray = (int[][])objectInputStream.readObject();
                     System.out.println("Server: Got 2d array");
                     this.matrix = new Matrix(tempArray);
                     this.matrix.printMatrix();
                     this.traversableMatrix = new TraversableMatrix(this.matrix);
+                    lock.writeLock().unlock();
                     break;
                 }
 
