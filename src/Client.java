@@ -91,7 +91,7 @@ public class Client {
             shortestPaths.forEach(result -> System.out.println(result));
         }else
             System.out.println("There are no available path between 2 indexes");
-        //
+
 
         //matrix : source2
        /*
@@ -102,7 +102,7 @@ public class Client {
         toServer.writeObject(new Index(2, 4));
         toServer.writeObject("getShortestPath");
         Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
-        System.out.println("from client - Shortest path are:");
+        System.out.println("Task 2:\nShortest path are:");
         if(shortestPaths.size() != 0){
             shortestPaths.forEach(result -> System.out.println(result));
         }else
@@ -110,20 +110,20 @@ public class Client {
 */
 
         //matrix : source3
-/*
+
         //task2 - option 3
-        toServer.writeObject("start index");
-        toServer.writeObject(new Index(9, 8));
-        toServer.writeObject("end index");
-        toServer.writeObject(new Index(0, 9));
-        toServer.writeObject("getShortestPath");
-        Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
-        System.out.println("from client - Shortest path are:");
-        if(shortestPaths.size() != 0){
-            shortestPaths.forEach(result -> System.out.println(result));
-        }else
-            System.out.println("There are no available path between 2 indexes");
-*/
+//        toServer.writeObject("start index");
+//        toServer.writeObject(new Index(9, 8));
+//        toServer.writeObject("end index");
+//        toServer.writeObject(new Index(0, 9));
+//        toServer.writeObject("getShortestPath");
+//        Collection<List<Index>> shortestPaths = (Collection<List<Index>>) fromServer.readObject();
+//        System.out.println("Task 2:\nShortest path are:");
+//        if(shortestPaths.size() != 0){
+//            shortestPaths.forEach(result -> System.out.println(result));
+//        }else
+//            System.out.println("There are no available path between 2 indexes");
+
 
 // task 3 send "submarinesBoard" command and get if the board is valid.
 
