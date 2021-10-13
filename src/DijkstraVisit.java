@@ -60,10 +60,16 @@ public class DijkstraVisit<T> {
             //else create new future and add to local futures + global future lists
             readWriteLock.readLock().lock();
             if (visited.containsKey(neighbor)) {
-                readWriteLock.writeLock().lock();
-                futures.add(visited.get(neighbor));
-                readWriteLock.writeLock().unlock();
+                try {
+                    readWriteLock.readLock().unlock();
+                    readWriteLock.writeLock().lock();
+                    futures.add(visited.get(neighbor));
+                    readWriteLock.writeLock().unlock();
+                } catch (Exception e) {
+                    throw e;
+                }
             } else {
+                readWriteLock.readLock().unlock();
                 Callable<Collection<Map.Entry<List<T>, Integer>>> taskToHandle = () ->
                 {
                     List<T> newPrev = new ArrayList<>(blackList);
@@ -77,7 +83,6 @@ public class DijkstraVisit<T> {
                 futures.add(future);
                 readWriteLock.writeLock().unlock();
             }
-            readWriteLock.readLock().unlock();
         }
 
         for (Future<Collection<Map.Entry<List<T>, Integer>>> future : futures) {
